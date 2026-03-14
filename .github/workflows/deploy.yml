@@ -1,0 +1,27 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: 213.199.39.103
+          username: prompts-ssh
+          port: 22
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script_stop: true
+          script: |
+            cd /home/prompts-ssh/htdocs/prompts.digitala.co.il
+            git pull origin main
+            npm ci
+            npm run build
+            PATH=~/.npm-global/bin:$PATH pm2 restart prompt-vibe
