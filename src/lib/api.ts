@@ -40,3 +40,24 @@ export async function sendChat(history: ChatMessage[]): Promise<string> {
   const data = await response.json();
   return typeof data === 'string' ? data : (data?.reply ?? data?.message ?? JSON.stringify(data));
 }
+
+export async function fetchPromptContent(link: string): Promise<string> {
+  const response = await fetch(BASE_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'getContent', link }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`שגיאת שרת: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const content = data?.content;
+
+  if (typeof content !== 'string') {
+    throw new Error('תוכן לא זמין');
+  }
+
+  return content;
+}

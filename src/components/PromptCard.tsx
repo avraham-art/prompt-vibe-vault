@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { ExternalLink, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Check, Copy, ExternalLink, X } from 'lucide-react';
 import type { Prompt } from '../types';
+import { fetchPromptContent } from '../lib/api';
 
 const CATEGORY_COLORS: Record<string, string> = {
   'כתיבה': 'bg-blue-500/20 text-blue-300 border-blue-500/30',
@@ -18,7 +19,62 @@ interface PromptCardProps {
 
 export function PromptCard({ prompt }: PromptCardProps) {
   const [expanded, setExpanded] = useState(false);
+  const [contentText, setContentText] = useState('');
+  const [isLoadingContent, setIsLoadingContent] = useState(false);
+  const [contentError, setContentError] = useState(false);
+  const [copied, setCopied] = useState(false);
   const categoryStyle = CATEGORY_COLORS[prompt.category] ?? DEFAULT_COLOR;
+
+  useEffect(() => {
+    if (!expanded || !prompt.link || contentText || isLoadingContent) {
+      return;
+    }
+
+    let isCancelled = false;
+
+    const loadContent = async () => {
+      setIsLoadingContent(true);
+      setContentError(false);
+
+      try {
+        const content = await fetchPromptContent(prompt.link);
+        if (!isCancelled) {
+          setContentText(content);
+        }
+      } catch (error) {
+        console.error('Failed to load prompt content:', error);
+        if (!isCancelled) {
+          setContentError(true);
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsLoadingContent(false);
+        }
+      }
+    };
+
+    void loadContent();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [expanded, prompt.link, contentText, isLoadingContent]);
+
+  const handleCopyContent = async (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+
+    if (!contentText) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(contentText);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error('Failed to copy prompt content:', error);
+    }
+  };
 
   return (
     <div
@@ -59,9 +115,32 @@ export function PromptCard({ prompt }: PromptCardProps) {
         </p>
       )}
 
-      {expanded && prompt.content && (
-        <div className="rounded-xl border border-white/10 bg-slate-950/40 p-3 text-sm leading-relaxed text-slate-300 whitespace-pre-wrap">
-          {prompt.content}
+      {expanded && (
+        <div className="rounded-xl border border-white/10 bg-slate-950/40 p-3 text-sm leading-relaxed text-slate-300">
+          {isLoadingContent ? (
+            <div className="space-y-2" aria-live="polite">
+              <div className="h-4 w-full animate-pulse rounded bg-white/10" />
+              <div className="h-4 w-5/6 animate-pulse rounded bg-white/10" />
+              <div className="h-4 w-2/3 animate-pulse rounded bg-white/10" />
+              <span className="text-xs text-slate-400">טוען...</span>
+            </div>
+          ) : contentError ? (
+            <p className="text-sm text-rose-300">לא ניתן לטעון את התוכן</p>
+          ) : contentText ? (
+            <div className="space-y-3">
+              <div className="whitespace-pre-wrap">{contentText}</div>
+              <button
+                type="button"
+                onClick={handleCopyContent}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-slate-200 transition-colors hover:border-violet-400/40 hover:text-white"
+              >
+                {copied ? <Check size={14} /> : <Copy size={14} />}
+                {copied ? 'הועתק' : 'העתק'}
+              </button>
+            </div>
+          ) : (
+            <p className="text-sm text-slate-400">לא נמצא תוכן להצגה</p>
+          )}
         </div>
       )}
 
