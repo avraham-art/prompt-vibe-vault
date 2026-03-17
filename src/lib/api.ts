@@ -42,11 +42,8 @@ export async function sendChat(history: ChatMessage[]): Promise<string> {
 }
 
 export async function fetchPromptContent(link: string): Promise<string> {
-  const response = await fetch(BASE_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'getContent', link }),
-  });
+  const url = `${BASE_URL}?action=getContent&link=${encodeURIComponent(link)}`;
+  const response = await fetch(url);
 
   if (!response.ok) {
     throw new Error(`שגיאת שרת: ${response.status}`);
