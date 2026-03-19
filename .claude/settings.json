@@ -1,13 +1,21 @@
 {
-  "model": "claude-sonnet-4-6",
   "permissions": {
-    "allowedTools": ["Read", "Write", "Bash(npm *)", "Bash(git *)"],
     "deny": [
       "Read(./.env)",
       "Read(./.env.*)",
       "Write(./dist/*)"
+    ],
+    "allowedTools": [
+      "Read",
+      "Write",
+      "Bash(npm *)",
+      "Bash(git *)"
+    ],
+    "allow": [
+      "Bash(npx tsc --noEmit)"
     ]
   },
+  "model": "claude-sonnet-4-6",
   "hooks": {
     "PostToolUse": [
       {

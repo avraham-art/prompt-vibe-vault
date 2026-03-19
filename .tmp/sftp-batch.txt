@@ -1,0 +1,1 @@
+put .tmp/bashrc.clean .bashrc
