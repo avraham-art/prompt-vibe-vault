@@ -19,6 +19,7 @@ interface PromptCardProps {
 
 export function PromptCard({ prompt }: PromptCardProps) {
   const [expanded, setExpanded] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false);
   const [contentText, setContentText] = useState('');
   const [loadedLink, setLoadedLink] = useState<string | null>(null);
   const [isLoadingContent, setIsLoadingContent] = useState(false);
@@ -31,6 +32,7 @@ export function PromptCard({ prompt }: PromptCardProps) {
     setLoadedLink(null);
     setContentError(false);
     setIsLoadingContent(false);
+    setCopied(false);
   }, [prompt.link]);
 
   useEffect(() => {
@@ -69,6 +71,47 @@ export function PromptCard({ prompt }: PromptCardProps) {
     };
   }, [expanded, prompt.link, loadedLink]);
 
+  useEffect(() => {
+    if (!expanded) {
+      setIsModalVisible(false);
+      return;
+    }
+
+    const animationFrame = window.requestAnimationFrame(() => {
+      setIsModalVisible(true);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+    };
+  }, [expanded]);
+
+  useEffect(() => {
+    if (!expanded) {
+      return;
+    }
+
+    const originalOverflow = document.body.style.overflow;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setExpanded(false);
+      }
+    };
+
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [expanded]);
+
+  const closeModal = () => {
+    setExpanded(false);
+    setCopied(false);
+  };
+
   const handleCopyContent = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
 
@@ -86,85 +129,133 @@ export function PromptCard({ prompt }: PromptCardProps) {
   };
 
   return (
-    <div
-      onClick={() => setExpanded(true)}
-      className={`glass rounded-2xl p-5 flex flex-col gap-3 transition-all duration-300 group cursor-pointer ${
-        expanded
-          ? 'relative border-violet-500/40 shadow-lg shadow-violet-500/10'
-          : 'hover:border-violet-500/30 hover:shadow-lg hover:shadow-violet-500/10'
-      }`}
-    >
-      {expanded && (
-        <button
-          type="button"
-          aria-label="סגור כרטיסייה"
-          onClick={(e) => {
-            e.stopPropagation();
-            setExpanded(false);
-          }}
-          className="absolute start-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-slate-900/70 text-slate-300 transition-colors hover:text-white hover:border-violet-400/40"
-        >
-          <X size={16} />
-        </button>
-      )}
-
-      <h3 className="text-white font-semibold text-base leading-snug group-hover:text-violet-300 transition-colors">
-        {prompt.name}
-      </h3>
-
-      <span
-        className={`self-start text-xs px-2.5 py-0.5 rounded-full border font-medium ${categoryStyle}`}
+    <>
+      <div
+        onClick={() => setExpanded(true)}
+        className="glass rounded-2xl p-5 flex flex-col gap-3 transition-all duration-300 group cursor-pointer hover:border-violet-500/30 hover:shadow-lg hover:shadow-violet-500/10"
       >
-        {prompt.category}
-      </span>
+        <h3 className="text-white font-semibold text-base leading-snug group-hover:text-violet-300 transition-colors">
+          {prompt.name}
+        </h3>
 
-      {prompt.description && (
-        <p className={`text-slate-400 text-sm leading-relaxed ${expanded ? '' : 'line-clamp-3'}`}>
-          {prompt.description}
-        </p>
-      )}
+        <span
+          className={`self-start text-xs px-2.5 py-0.5 rounded-full border font-medium ${categoryStyle}`}
+        >
+          {prompt.category}
+        </span>
+
+        {prompt.description && (
+          <p className="text-slate-400 text-sm leading-relaxed line-clamp-3">{prompt.description}</p>
+        )}
+
+        {prompt.link && (
+          <a
+            href={prompt.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="mt-auto inline-flex items-center gap-1.5 text-violet-400 text-sm font-medium hover:text-violet-300 transition-colors"
+          >
+            <ExternalLink size={14} />
+            פתח ב-Drive
+          </a>
+        )}
+      </div>
 
       {expanded && (
-        <div className="rounded-xl border border-white/10 bg-slate-950/40 p-3 text-sm leading-relaxed text-slate-300">
-          {isLoadingContent ? (
-            <div className="space-y-2" aria-live="polite">
-              <div className="h-4 w-full animate-pulse rounded bg-white/10" />
-              <div className="h-4 w-5/6 animate-pulse rounded bg-white/10" />
-              <div className="h-4 w-2/3 animate-pulse rounded bg-white/10" />
-              <span className="text-xs text-slate-400">טוען...</span>
+        <div
+          dir="rtl"
+          className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-all duration-300 sm:p-6 ${
+            isModalVisible ? 'bg-slate-950/55 backdrop-blur-md' : 'bg-slate-950/0 backdrop-blur-0'
+          }`}
+          onClick={closeModal}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={`prompt-modal-title-${prompt.id}`}
+            onClick={(event) => event.stopPropagation()}
+            className={`glass relative w-full max-w-3xl overflow-hidden rounded-[2rem] border border-white/15 bg-white/10 shadow-2xl shadow-violet-950/30 transition-all duration-300 ${
+              isModalVisible ? 'translate-y-0 scale-100 opacity-100' : 'translate-y-6 scale-95 opacity-0'
+            }`}
+          >
+            <button
+              type="button"
+              aria-label="סגור חלון"
+              onClick={closeModal}
+              className="absolute left-4 top-4 z-10 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-slate-950/60 text-slate-300 transition-colors hover:border-violet-400/40 hover:text-white"
+            >
+              <X size={18} />
+            </button>
+
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,#a78bfa1f,transparent_45%),linear-gradient(135deg,#ffffff14,transparent_55%)]" />
+
+            <div className="relative flex max-h-[85vh] flex-col gap-5 p-6 text-right sm:p-8">
+              <div className="flex flex-col gap-3 border-b border-white/10 pb-5 pl-12">
+                <span
+                  className={`self-start text-xs px-2.5 py-0.5 rounded-full border font-medium ${categoryStyle}`}
+                >
+                  {prompt.category}
+                </span>
+                <h2
+                  id={`prompt-modal-title-${prompt.id}`}
+                  className="text-2xl font-semibold leading-tight text-white sm:text-3xl"
+                >
+                  {prompt.name}
+                </h2>
+                {prompt.description && (
+                  <p className="text-sm leading-relaxed text-slate-300">{prompt.description}</p>
+                )}
+              </div>
+
+              <div className="min-h-0 flex-1 overflow-hidden rounded-2xl border border-white/10 bg-slate-950/45 p-4 sm:p-5">
+                {isLoadingContent ? (
+                  <div className="space-y-3" aria-live="polite">
+                    <div className="h-4 w-full animate-pulse rounded bg-white/10" />
+                    <div className="h-4 w-11/12 animate-pulse rounded bg-white/10" />
+                    <div className="h-4 w-4/5 animate-pulse rounded bg-white/10" />
+                    <div className="h-4 w-3/4 animate-pulse rounded bg-white/10" />
+                    <span className="text-xs text-slate-400">טוען תוכן מלא...</span>
+                  </div>
+                ) : contentError ? (
+                  <p className="text-sm text-rose-300">לא ניתן לטעון את התוכן</p>
+                ) : contentText ? (
+                  <div className="max-h-[50vh] overflow-y-auto whitespace-pre-wrap pr-1 text-sm leading-7 text-slate-100">
+                    {contentText}
+                  </div>
+                ) : (
+                  <p className="text-sm text-slate-400">לא נמצא תוכן להצגה</p>
+                )}
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-4">
+                <button
+                  type="button"
+                  onClick={handleCopyContent}
+                  disabled={!contentText}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-slate-100 transition-colors hover:border-violet-400/40 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {copied ? <Check size={16} /> : <Copy size={16} />}
+                  {copied ? 'הועתק ✓' : 'העתק פרומפט'}
+                </button>
+
+                {prompt.link && (
+                  <a
+                    href={prompt.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="inline-flex items-center gap-1.5 text-sm font-medium text-violet-300 transition-colors hover:text-violet-200"
+                  >
+                    <ExternalLink size={15} />
+                    פתח ב-Drive
+                  </a>
+                )}
+              </div>
             </div>
-          ) : contentError ? (
-            <p className="text-sm text-rose-300">לא ניתן לטעון את התוכן</p>
-          ) : contentText ? (
-            <div className="space-y-3">
-              <div className="whitespace-pre-wrap">{contentText}</div>
-              <button
-                type="button"
-                onClick={handleCopyContent}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-slate-200 transition-colors hover:border-violet-400/40 hover:text-white"
-              >
-                {copied ? <Check size={14} /> : <Copy size={14} />}
-                {copied ? 'הועתק' : 'העתק'}
-              </button>
-            </div>
-          ) : (
-            <p className="text-sm text-slate-400">לא נמצא תוכן להצגה</p>
-          )}
+          </div>
         </div>
       )}
-
-      {prompt.link && (
-        <a
-          href={prompt.link}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
-          className="mt-auto inline-flex items-center gap-1.5 text-violet-400 text-sm font-medium hover:text-violet-300 transition-colors"
-        >
-          <ExternalLink size={14} />
-          פתח ב-Drive
-        </a>
-      )}
-    </div>
+    </>
   );
 }
