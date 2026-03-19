@@ -2,9 +2,10 @@ import type { Prompt, ChatMessage } from '../types';
 
 const BASE_URL =
   'https://script.google.com/macros/s/AKfycbyfv3c2zFNyLgs3Z9kjgv2WJUVIm5w6EHjnhX1asAqHlKnYY7jXh-1NYhd6ZV4xmrZ1/exec';
+const PROMPTS_API_URL = '/api/prompts';
 
 export async function fetchPrompts(): Promise<Prompt[]> {
-  const response = await fetch(BASE_URL);
+  const response = await fetch(PROMPTS_API_URL);
   if (!response.ok) {
     throw new Error(`שגיאת רשת: ${response.status}`);
   }
