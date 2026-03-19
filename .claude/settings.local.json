@@ -1,7 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(ssh -o StrictHostKeyChecking=no prompts-ssh@213.199.39.103 ':*)"
-    ]
-  }
-}
