@@ -20,13 +20,21 @@ interface PromptCardProps {
 export function PromptCard({ prompt }: PromptCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [contentText, setContentText] = useState('');
+  const [loadedLink, setLoadedLink] = useState<string | null>(null);
   const [isLoadingContent, setIsLoadingContent] = useState(false);
   const [contentError, setContentError] = useState(false);
   const [copied, setCopied] = useState(false);
   const categoryStyle = CATEGORY_COLORS[prompt.category] ?? DEFAULT_COLOR;
 
   useEffect(() => {
-    if (!expanded || !prompt.link || contentText || isLoadingContent) {
+    setContentText('');
+    setLoadedLink(null);
+    setContentError(false);
+    setIsLoadingContent(false);
+  }, [prompt.link]);
+
+  useEffect(() => {
+    if (!expanded || !prompt.link || loadedLink === prompt.link) {
       return;
     }
 
@@ -40,6 +48,7 @@ export function PromptCard({ prompt }: PromptCardProps) {
         const content = await fetchPromptContent(prompt.link);
         if (!isCancelled) {
           setContentText(content);
+          setLoadedLink(prompt.link);
         }
       } catch (error) {
         console.error('Failed to load prompt content:', error);
@@ -58,7 +67,7 @@ export function PromptCard({ prompt }: PromptCardProps) {
     return () => {
       isCancelled = true;
     };
-  }, [expanded, prompt.link, contentText, isLoadingContent]);
+  }, [expanded, prompt.link, loadedLink]);
 
   const handleCopyContent = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
