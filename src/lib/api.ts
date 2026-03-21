@@ -43,10 +43,10 @@ export async function sendChat(history: ChatMessage[]): Promise<string> {
 }
 
 export async function translatePrompt(content: string): Promise<string> {
-  const response = await fetch(BASE_URL, {
+  const response = await fetch('/api/translate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'translate', content }),
+    body: JSON.stringify({ content }),
   });
   if (!response.ok) {
     throw new Error(`שגיאת שרת: ${response.status}`);

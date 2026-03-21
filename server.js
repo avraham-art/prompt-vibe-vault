@@ -64,6 +64,7 @@ async function getPrompts() {
   return promptsCache.inFlightRequest;
 }
 
+app.use(express.json());
 app.use(express.static(join(__dirname, 'dist')));
 
 app.get('/api/prompts', async (_req, res) => {
@@ -73,6 +74,28 @@ app.get('/api/prompts', async (_req, res) => {
   } catch (error) {
     console.error('Failed to load prompts:', error);
     res.status(502).json({ error: 'Failed to load prompts' });
+  }
+});
+
+app.post('/api/translate', async (req, res) => {
+  const { content } = req.body ?? {};
+  if (!content || typeof content !== 'string') {
+    return res.status(400).json({ error: 'content is required' });
+  }
+  try {
+    const upstream = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'translate', content }),
+    });
+    if (!upstream.ok) {
+      throw new Error(`Apps Script error: ${upstream.status}`);
+    }
+    const data = await upstream.json();
+    res.json(data);
+  } catch (error) {
+    console.error('Translation failed:', error);
+    res.status(502).json({ error: 'Translation failed' });
   }
 });
 
