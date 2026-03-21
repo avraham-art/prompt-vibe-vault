@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Check, Copy, ExternalLink, X } from 'lucide-react';
 import type { Prompt } from '../types';
-import { fetchPromptContent } from '../lib/api';
+import { fetchPromptContent, translatePrompt } from '../lib/api';
 
 const CATEGORY_COLORS: Record<string, string> = {
   'כתיבה': 'bg-blue-500/20 text-blue-300 border-blue-500/30',
@@ -25,6 +25,9 @@ export function PromptCard({ prompt }: PromptCardProps) {
   const [isLoadingContent, setIsLoadingContent] = useState(false);
   const [contentError, setContentError] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [translatedText, setTranslatedText] = useState('');
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [showTranslation, setShowTranslation] = useState(false);
   const categoryStyle = CATEGORY_COLORS[prompt.category] ?? DEFAULT_COLOR;
 
   useEffect(() => {
@@ -33,6 +36,9 @@ export function PromptCard({ prompt }: PromptCardProps) {
     setContentError(false);
     setIsLoadingContent(false);
     setCopied(false);
+    setTranslatedText('');
+    setShowTranslation(false);
+    setIsTranslating(false);
   }, [prompt.link]);
 
   useEffect(() => {
@@ -110,6 +116,28 @@ export function PromptCard({ prompt }: PromptCardProps) {
   const closeModal = () => {
     setExpanded(false);
     setCopied(false);
+    setShowTranslation(false);
+  };
+
+  const handleTranslate = async (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    if (!contentText) return;
+
+    if (translatedText) {
+      setShowTranslation(true);
+      return;
+    }
+
+    setIsTranslating(true);
+    try {
+      const result = await translatePrompt(contentText);
+      setTranslatedText(result);
+      setShowTranslation(true);
+    } catch (error) {
+      console.error('Failed to translate:', error);
+    } finally {
+      setIsTranslating(false);
+    }
   };
 
   const handleCopyContent = async (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -217,8 +245,19 @@ export function PromptCard({ prompt }: PromptCardProps) {
                     <div className="h-4 w-3/4 animate-pulse rounded bg-white/10" />
                     <span className="text-xs text-slate-400">טוען תוכן מלא...</span>
                   </div>
+                ) : isTranslating ? (
+                  <div className="space-y-3" aria-live="polite">
+                    <div className="h-4 w-full animate-pulse rounded bg-violet-500/20" />
+                    <div className="h-4 w-11/12 animate-pulse rounded bg-violet-500/20" />
+                    <div className="h-4 w-4/5 animate-pulse rounded bg-violet-500/20" />
+                    <span className="text-xs text-violet-400">מתרגם...</span>
+                  </div>
                 ) : contentError ? (
                   <p className="text-sm text-rose-300">לא ניתן לטעון את התוכן</p>
+                ) : (showTranslation && translatedText) ? (
+                  <div className="max-h-[50vh] overflow-y-auto whitespace-pre-wrap pr-1 text-sm leading-7 text-slate-100">
+                    {translatedText}
+                  </div>
                 ) : contentText ? (
                   <div className="max-h-[50vh] overflow-y-auto whitespace-pre-wrap pr-1 text-sm leading-7 text-slate-100">
                     {contentText}
@@ -229,15 +268,36 @@ export function PromptCard({ prompt }: PromptCardProps) {
               </div>
 
               <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-4">
-                <button
-                  type="button"
-                  onClick={handleCopyContent}
-                  disabled={!contentText}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-slate-100 transition-colors hover:border-violet-400/40 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {copied ? <Check size={16} /> : <Copy size={16} />}
-                  {copied ? 'הועתק ✓' : 'העתק פרומפט'}
-                </button>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={handleCopyContent}
+                    disabled={!contentText}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-slate-100 transition-colors hover:border-violet-400/40 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {copied ? <Check size={16} /> : <Copy size={16} />}
+                    {copied ? 'הועתק ✓' : 'העתק פרומפט'}
+                  </button>
+
+                  {showTranslation ? (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setShowTranslation(false); }}
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-violet-500/30 bg-violet-500/10 px-4 py-2 text-sm font-medium text-violet-300 transition-colors hover:border-violet-400/50 hover:text-violet-200"
+                    >
+                      הצג מקור
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleTranslate}
+                      disabled={!contentText || isTranslating}
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-slate-100 transition-colors hover:border-violet-400/40 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {isTranslating ? 'מתרגם...' : 'תרגם לעברית 🇮🇱'}
+                    </button>
+                  )}
+                </div>
 
                 {prompt.link && (
                   <a
