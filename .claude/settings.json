@@ -6,7 +6,10 @@
       "Bash(npm run build)",
       "Bash(git add src/components/PromptCard.tsx src/lib/api.ts .claude/settings.json)",
       "Bash(git commit -m \"feat: add Hebrew translation toggle to prompt modal\")",
-      "Bash(git push origin main)"
+      "Bash(git push origin main)",
+      "Bash(ssh -o StrictHostKeyChecking=no prompts-ssh@213.199.39.103 'curl -s -X POST http://localhost:3002/api/translate -H \"\"Content-Type: application/json\"\" -d \"\"{\\\\\"\"content\\\\\"\": \\\\\"\"Hello world\\\\\"\"}\"\"')",
+      "Skill(deploy)",
+      "Skill(deploy:*)"
     ],
     "deny": [
       "Read(./.env)",

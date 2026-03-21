@@ -246,11 +246,11 @@ export function PromptCard({ prompt }: PromptCardProps) {
                     <span className="text-xs text-slate-400">טוען תוכן מלא...</span>
                   </div>
                 ) : isTranslating ? (
-                  <div className="space-y-3" aria-live="polite">
-                    <div className="h-4 w-full animate-pulse rounded bg-violet-500/20" />
-                    <div className="h-4 w-11/12 animate-pulse rounded bg-violet-500/20" />
-                    <div className="h-4 w-4/5 animate-pulse rounded bg-violet-500/20" />
-                    <span className="text-xs text-violet-400">מתרגם...</span>
+                  <div className="flex h-full min-h-[6rem] flex-col items-center justify-center gap-2" aria-live="polite">
+                    <span className="text-sm text-violet-400/80">מתרגם עם Gemini AI... (עד 20 שניות) ✨</span>
+                    <div className="h-1 w-32 overflow-hidden rounded-full bg-violet-500/20">
+                      <div className="h-full w-1/2 animate-pulse rounded-full bg-violet-400/50" />
+                    </div>
                   </div>
                 ) : contentError ? (
                   <p className="text-sm text-rose-300">לא ניתן לטעון את התוכן</p>
