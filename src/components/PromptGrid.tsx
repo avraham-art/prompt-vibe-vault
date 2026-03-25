@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Search } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import type { Prompt } from '../types';
 import { PromptCard } from './PromptCard';
 import { SkeletonCard } from './SkeletonCard';
@@ -7,26 +7,54 @@ import { SkeletonCard } from './SkeletonCard';
 interface PromptGridProps {
   prompts: Prompt[];
   loading: boolean;
+  selectedCategory: string | null;
+  setSelectedCategory: (category: string | null) => void;
 }
 
 const SKELETON_COUNT = 6;
 
-export function PromptGrid({ prompts, loading }: PromptGridProps) {
+export function PromptGrid({
+  prompts,
+  loading,
+  selectedCategory,
+  setSelectedCategory,
+}: PromptGridProps) {
   const [search, setSearch] = useState('');
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return prompts;
-    const q = search.toLowerCase();
-    return prompts.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) ||
-        p.category.toLowerCase().includes(q) ||
-        p.description?.toLowerCase().includes(q),
-    );
-  }, [prompts, search]);
+    const q = search.trim().toLowerCase();
+
+    return prompts.filter((p) => {
+      const matchesCategory = selectedCategory
+        ? (p.category?.trim() || 'ללא קטגוריה') === selectedCategory
+        : true;
+
+      const matchesSearch = q
+        ? p.name.toLowerCase().includes(q) ||
+          p.category.toLowerCase().includes(q) ||
+          p.description?.toLowerCase().includes(q)
+        : true;
+
+      return matchesCategory && matchesSearch;
+    });
+  }, [prompts, search, selectedCategory]);
 
   return (
     <div className="flex flex-col gap-6">
+      {selectedCategory && (
+        <div className="flex items-center justify-between gap-3 rounded-2xl border border-violet-500/30 bg-violet-500/10 px-4 py-3 text-sm text-violet-100">
+          <span>מסנן לפי: {selectedCategory}</span>
+          <button
+            type="button"
+            onClick={() => setSelectedCategory(null)}
+            className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/8 text-violet-100 transition-colors hover:bg-white/12"
+            aria-label="נקה סינון קטגוריה"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
       <div className="relative">
         <Search
           size={16}
@@ -50,7 +78,7 @@ export function PromptGrid({ prompts, loading }: PromptGridProps) {
       ) : filtered.length === 0 ? (
         <div className="text-center py-16 text-slate-500">
           <p className="text-lg">לא נמצאו פרומפטים</p>
-          {search && (
+          {(search || selectedCategory) && (
             <p className="text-sm mt-1">נסה לחפש במילים אחרות</p>
           )}
         </div>

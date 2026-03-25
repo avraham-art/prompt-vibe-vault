@@ -5,6 +5,8 @@ import { PromptChatPanel } from './PromptChatPanel';
 interface DashboardProps {
   prompts: Prompt[];
   loading: boolean;
+  setSelectedCategory: (category: string | null) => void;
+  setCurrentPage: (page: 'library' | 'dashboard') => void;
 }
 
 interface CategoryStat {
@@ -13,7 +15,12 @@ interface CategoryStat {
   percentage: number;
 }
 
-export function Dashboard({ prompts, loading }: DashboardProps) {
+export function Dashboard({
+  prompts,
+  loading,
+  setSelectedCategory,
+  setCurrentPage,
+}: DashboardProps) {
   const totalPrompts = prompts.length;
 
   const categoryStats: CategoryStat[] = Object.entries(
@@ -29,6 +36,11 @@ export function Dashboard({ prompts, loading }: DashboardProps) {
       percentage: totalPrompts > 0 ? Math.round((count / totalPrompts) * 100) : 0,
     }))
     .sort((a, b) => b.count - a.count);
+
+  const handleCategoryClick = (category: string) => {
+    setSelectedCategory(category);
+    setCurrentPage('library');
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -113,7 +125,12 @@ export function Dashboard({ prompts, loading }: DashboardProps) {
 
             {!loading &&
               categoryStats.map((stat) => (
-                <div key={stat.name} className="glass rounded-2xl p-4">
+                <button
+                  key={stat.name}
+                  type="button"
+                  onClick={() => handleCategoryClick(stat.name)}
+                  className="glass rounded-2xl p-4 text-right transition-all hover:border-violet-500/40 hover:bg-white/8"
+                >
                   <div className="mb-3 flex items-center justify-between gap-3">
                     <div>
                       <p className="font-medium text-white">{stat.name}</p>
@@ -129,7 +146,7 @@ export function Dashboard({ prompts, loading }: DashboardProps) {
                       style={{ width: `${stat.percentage}%` }}
                     />
                   </div>
-                </div>
+                </button>
               ))}
           </div>
         </div>

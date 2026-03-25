@@ -12,9 +12,15 @@ function App() {
   const [chatOpen, setChatOpen] = useState(false);
   const [toastError, setToastError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState<'library' | 'dashboard'>('dashboard');
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const handleError = (msg: string) => setToastError(msg);
   const handleSyncDone = () => refetch();
+  const goToLibrary = () => setCurrentPage('library');
+  const goToDashboard = () => {
+    setSelectedCategory(null);
+    setCurrentPage('dashboard');
+  };
 
   return (
     <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #0f0f1a 0%, #1a0a2e 50%, #0f0f1a 100%)' }}>
@@ -34,7 +40,7 @@ function App() {
           <div className="flex items-center gap-2">
             <nav className="glass rounded-2xl p-1 flex items-center gap-1">
               <button
-                onClick={() => setCurrentPage('library')}
+                onClick={goToLibrary}
                 className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all ${
                   currentPage === 'library'
                     ? 'bg-violet-600 text-white shadow-lg shadow-violet-900/30'
@@ -45,7 +51,7 @@ function App() {
                 ספרייה 📚
               </button>
               <button
-                onClick={() => setCurrentPage('dashboard')}
+                onClick={goToDashboard}
                 className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all ${
                   currentPage === 'dashboard'
                     ? 'bg-violet-600 text-white shadow-lg shadow-violet-900/30'
@@ -90,10 +96,20 @@ function App() {
               </p>
             </div>
 
-            <PromptGrid prompts={prompts} loading={loading} />
+            <PromptGrid
+              prompts={prompts}
+              loading={loading}
+              selectedCategory={selectedCategory}
+              setSelectedCategory={setSelectedCategory}
+            />
           </>
         ) : (
-          <Dashboard prompts={prompts} loading={loading} />
+          <Dashboard
+            prompts={prompts}
+            loading={loading}
+            setSelectedCategory={setSelectedCategory}
+            setCurrentPage={setCurrentPage}
+          />
         )}
       </main>
 
