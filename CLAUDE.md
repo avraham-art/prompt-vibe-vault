@@ -221,6 +221,7 @@ curl "https://script.google.com/macros/s/AKfycbyfv3c2zFNyLgs3Z9kjgv2WJUVIm5w6EHj
 - [ ] Build `usePrompts` hook
 - [ ] Build `PromptGrid` component
 - [ ] Build `ChatModal` component
+- [x] Build `Dashboard` component
 - [ ] Build `SyncButton` component
 - [ ] Test API connection
 - [ ] GitHub repo + push

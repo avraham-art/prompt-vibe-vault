@@ -1,15 +1,17 @@
 import { useState } from 'react';
-import { MessageCircle, Zap } from 'lucide-react';
+import { BarChart3, Library, MessageCircle, Zap } from 'lucide-react';
 import { usePrompts } from './hooks/usePrompts';
 import { PromptGrid } from './components/PromptGrid';
 import { SyncButton } from './components/SyncButton';
 import { ChatModal } from './components/ChatModal';
 import { ErrorToast } from './components/ErrorToast';
+import { Dashboard } from './components/Dashboard';
 
 function App() {
   const { prompts, loading, error, refetch } = usePrompts();
   const [chatOpen, setChatOpen] = useState(false);
   const [toastError, setToastError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState<'library' | 'dashboard'>('library');
 
   const handleError = (msg: string) => setToastError(msg);
   const handleSyncDone = () => refetch();
@@ -30,14 +32,41 @@ function App() {
           </div>
 
           <div className="flex items-center gap-2">
+            <nav className="glass rounded-2xl p-1 flex items-center gap-1">
+              <button
+                onClick={() => setCurrentPage('library')}
+                className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all ${
+                  currentPage === 'library'
+                    ? 'bg-violet-600 text-white shadow-lg shadow-violet-900/30'
+                    : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                <Library size={15} />
+                ספרייה 📚
+              </button>
+              <button
+                onClick={() => setCurrentPage('dashboard')}
+                className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all ${
+                  currentPage === 'dashboard'
+                    ? 'bg-violet-600 text-white shadow-lg shadow-violet-900/30'
+                    : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                <BarChart3 size={15} />
+                דשבורד 📊
+              </button>
+            </nav>
+
             <SyncButton onSync={handleSyncDone} onError={handleError} />
-            <button
-              onClick={() => setChatOpen(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl glass hover:border-violet-500/40 text-slate-300 hover:text-white text-sm font-medium transition-all"
-            >
-              <MessageCircle size={15} />
-              צ'אט
-            </button>
+            {currentPage === 'library' && (
+              <button
+                onClick={() => setChatOpen(true)}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl glass hover:border-violet-500/40 text-slate-300 hover:text-white text-sm font-medium transition-all"
+              >
+                <MessageCircle size={15} />
+                צ'אט
+              </button>
+            )}
           </div>
         </div>
       </header>
@@ -53,13 +82,19 @@ function App() {
           </div>
         )}
 
-        <div className="mb-6 flex items-center justify-between">
-          <p className="text-slate-400 text-sm">
-            {loading ? 'טוען...' : `${prompts.length} פרומפטים`}
-          </p>
-        </div>
+        {currentPage === 'library' ? (
+          <>
+            <div className="mb-6 flex items-center justify-between">
+              <p className="text-slate-400 text-sm">
+                {loading ? 'טוען...' : `${prompts.length} פרומפטים`}
+              </p>
+            </div>
 
-        <PromptGrid prompts={prompts} loading={loading} />
+            <PromptGrid prompts={prompts} loading={loading} />
+          </>
+        ) : (
+          <Dashboard prompts={prompts} loading={loading} />
+        )}
       </main>
 
       {/* Chat Modal */}
