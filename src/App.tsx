@@ -11,7 +11,7 @@ function App() {
   const { prompts, loading, error, refetch } = usePrompts();
   const [chatOpen, setChatOpen] = useState(false);
   const [toastError, setToastError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState<'library' | 'dashboard'>('library');
+  const [currentPage, setCurrentPage] = useState<'library' | 'dashboard'>('dashboard');
 
   const handleError = (msg: string) => setToastError(msg);
   const handleSyncDone = () => refetch();
@@ -19,7 +19,7 @@ function App() {
   return (
     <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #0f0f1a 0%, #1a0a2e 50%, #0f0f1a 100%)' }}>
       {/* Header */}
-      <header className="glass-dark sticky top-0 z-40 border-b border-white/10">
+      <header className="sticky top-0 z-40 border-b border-white/10 bg-[#0a0a0f]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-violet-600 flex items-center justify-center">
