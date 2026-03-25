@@ -99,6 +99,32 @@ app.post('/api/translate', async (req, res) => {
   }
 });
 
+app.post('/api/chat', async (req, res) => {
+  const { history } = req.body ?? {};
+
+  if (!Array.isArray(history)) {
+    return res.status(400).json({ error: 'history is required' });
+  }
+
+  try {
+    const upstream = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'chat', history }),
+    });
+
+    if (!upstream.ok) {
+      throw new Error(`Apps Script error: ${upstream.status}`);
+    }
+
+    const data = await upstream.json();
+    res.json(data);
+  } catch (error) {
+    console.error('Chat failed:', error);
+    res.status(502).json({ error: 'Chat failed' });
+  }
+});
+
 app.get('/{*path}', (_req, res) => {
   res.sendFile(join(__dirname, 'dist', 'index.html'));
 });

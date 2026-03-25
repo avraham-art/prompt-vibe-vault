@@ -30,10 +30,10 @@ export async function syncPrompts(): Promise<void> {
 }
 
 export async function sendChat(history: ChatMessage[]): Promise<string> {
-  const response = await fetch(BASE_URL, {
+  const response = await fetch('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'chat', history }),
+    body: JSON.stringify({ history }),
   });
   if (!response.ok) {
     throw new Error(`שגיאת שרת: ${response.status}`);
