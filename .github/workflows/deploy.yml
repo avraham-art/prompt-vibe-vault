@@ -24,4 +24,4 @@ jobs:
             git pull origin main
             npm ci
             npm run build
-            PATH=~/.npm-global/bin:$PATH pm2 restart prompt-vibe
+            PATH=/home/prompts-ssh/.npm-global/bin:/usr/bin:/bin /home/prompts-ssh/.npm-global/bin/pm2 restart prompt-vibe
