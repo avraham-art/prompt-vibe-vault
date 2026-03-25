@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Bot, Loader2, Send, User } from 'lucide-react';
+import { Bot, Copy, Loader2, Send, User } from 'lucide-react';
 import type { ChatMessage } from '../types';
 import { sendChat } from '../lib/api';
 
@@ -22,6 +22,7 @@ export function PromptChatPanel({
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -56,6 +57,18 @@ export function PromptChatPanel({
     }
   };
 
+  const copyMessage = async (content: string, index: number) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopiedIndex(index);
+      window.setTimeout(() => {
+        setCopiedIndex((current) => (current === index ? null : current));
+      }, 1000);
+    } catch {
+      setError('לא ניתן היה להעתיק את ההודעה');
+    }
+  };
+
   return (
     <div className="glass-dark flex h-full flex-col overflow-hidden rounded-2xl shadow-2xl shadow-violet-500/10">
       <div className="border-b border-white/10 px-5 py-4">
@@ -77,33 +90,50 @@ export function PromptChatPanel({
           <p className="mt-8 text-center text-sm text-slate-500">{emptyState}</p>
         )}
 
-        {history.map((msg, i) => (
-          <div
-            key={i}
-            className={`flex gap-2.5 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
-          >
+        {history.map((msg, i) => {
+          const isAssistant = msg.role !== 'user';
+
+          return (
             <div
-              className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
-                msg.role === 'user' ? 'bg-violet-600' : 'bg-slate-700'
-              }`}
+              key={i}
+              className={`flex gap-2.5 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
             >
-              {msg.role === 'user' ? (
-                <User size={14} className="text-white" />
-              ) : (
-                <Bot size={14} className="text-violet-300" />
-              )}
+              <div
+                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
+                  msg.role === 'user' ? 'bg-violet-600' : 'bg-slate-700'
+                }`}
+              >
+                {msg.role === 'user' ? (
+                  <User size={14} className="text-white" />
+                ) : (
+                  <Bot size={14} className="text-violet-300" />
+                )}
+              </div>
+              <div
+                className={`max-w-[75%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
+                  msg.role === 'user'
+                    ? 'rounded-tr-sm bg-violet-600 text-white'
+                    : 'glass rounded-tl-sm text-slate-200'
+                }`}
+              >
+                {isAssistant && (
+                  <div className="mb-2 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => copyMessage(msg.content, i)}
+                      className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-slate-300 transition-colors hover:border-violet-500/30 hover:text-white"
+                      aria-label="העתק הודעה"
+                    >
+                      <Copy size={12} />
+                      {copiedIndex === i ? 'הועתק ✓' : 'העתק'}
+                    </button>
+                  </div>
+                )}
+                {msg.content}
+              </div>
             </div>
-            <div
-              className={`max-w-[75%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
-                msg.role === 'user'
-                  ? 'rounded-tr-sm bg-violet-600 text-white'
-                  : 'glass rounded-tl-sm text-slate-200'
-              }`}
-            >
-              {msg.content}
-            </div>
-          </div>
-        ))}
+          );
+        })}
 
         {loading && (
           <div className="flex gap-2.5">
