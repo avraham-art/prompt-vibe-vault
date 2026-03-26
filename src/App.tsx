@@ -6,12 +6,14 @@ import { SyncButton } from './components/SyncButton';
 import { ChatModal } from './components/ChatModal';
 import { ErrorToast } from './components/ErrorToast';
 import { Dashboard } from './components/Dashboard';
+import { CookieBanner } from './components/CookieBanner';
+import { PrivacyPolicy } from './pages/PrivacyPolicy';
 
 function App() {
   const { prompts, loading, error, refetch } = usePrompts();
   const [chatOpen, setChatOpen] = useState(false);
   const [toastError, setToastError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState<'library' | 'dashboard'>('dashboard');
+  const [currentPage, setCurrentPage] = useState<'library' | 'dashboard' | 'privacy'>('dashboard');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const handleError = (msg: string) => setToastError(msg);
@@ -21,9 +23,17 @@ function App() {
     setSelectedCategory(null);
     setCurrentPage('dashboard');
   };
+  const goToPrivacyPolicy = () => {
+    setChatOpen(false);
+    setCurrentPage('privacy');
+  };
 
   return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #0f0f1a 0%, #1a0a2e 50%, #0f0f1a 100%)' }}>
+    <div
+      dir="rtl"
+      className="min-h-screen"
+      style={{ background: 'linear-gradient(135deg, #0f0f1a 0%, #1a0a2e 50%, #0f0f1a 100%)' }}
+    >
       {/* Header */}
       <header className="sticky top-0 z-40 border-b border-white/10 bg-[#0a0a0f]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-4">
@@ -103,6 +113,8 @@ function App() {
               setSelectedCategory={setSelectedCategory}
             />
           </>
+        ) : currentPage === 'privacy' ? (
+          <PrivacyPolicy />
         ) : (
           <Dashboard
             prompts={prompts}
@@ -113,6 +125,18 @@ function App() {
         )}
       </main>
 
+      <footer className="max-w-6xl mx-auto px-4 sm:px-6 pb-24 sm:pb-28">
+        <div className="glass rounded-2xl px-4 py-3 text-center text-sm text-slate-400">
+          <button
+            type="button"
+            onClick={goToPrivacyPolicy}
+            className="font-medium text-slate-200 transition-colors hover:text-white"
+          >
+            מדיניות פרטיות
+          </button>
+        </div>
+      </footer>
+
       {/* Chat Modal */}
       {chatOpen && <ChatModal onClose={() => setChatOpen(false)} />}
 
@@ -120,6 +144,8 @@ function App() {
       {toastError && (
         <ErrorToast message={toastError} onClose={() => setToastError(null)} />
       )}
+
+      <CookieBanner onOpenPrivacyPolicy={goToPrivacyPolicy} />
     </div>
   );
 }
