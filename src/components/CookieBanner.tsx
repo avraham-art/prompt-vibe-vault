@@ -2,11 +2,7 @@ import { useEffect, useState } from 'react';
 
 const COOKIE_CONSENT_KEY = 'promptvibe-cookie-consent';
 
-type CookieBannerProps = {
-  onOpenPrivacyPolicy: () => void;
-};
-
-export function CookieBanner({ onOpenPrivacyPolicy }: CookieBannerProps) {
+export function CookieBanner() {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -36,14 +32,7 @@ export function CookieBanner({ onOpenPrivacyPolicy }: CookieBannerProps) {
             </p>
           </div>
 
-          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center">
-            <button
-              type="button"
-              onClick={onOpenPrivacyPolicy}
-              className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-slate-200 transition-all hover:border-violet-400/40 hover:text-white"
-            >
-              למדיניות הפרטיות
-            </button>
+          <div className="flex justify-start sm:justify-end">
             <button
               type="button"
               onClick={handleAccept}

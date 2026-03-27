@@ -37,7 +37,11 @@ function App() {
       {/* Header */}
       <header className="sticky top-0 z-40 border-b border-white/10 bg-[#0a0a0f]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={goToDashboard}
+            className="flex items-center gap-2.5 rounded-2xl px-2 py-1 text-right transition-all hover:bg-white/5"
+          >
             <div className="w-8 h-8 rounded-xl bg-violet-600 flex items-center justify-center">
               <Zap size={16} className="text-white" />
             </div>
@@ -45,7 +49,7 @@ function App() {
               <h1 className="text-white font-bold text-base leading-none">PromptVibe Vault</h1>
               <p className="text-slate-500 text-xs mt-0.5">ניהול פרומפטים</p>
             </div>
-          </div>
+          </button>
 
           <div className="flex items-center gap-2">
             <nav className="glass rounded-2xl p-1 flex items-center gap-1">
@@ -145,7 +149,7 @@ function App() {
         <ErrorToast message={toastError} onClose={() => setToastError(null)} />
       )}
 
-      <CookieBanner onOpenPrivacyPolicy={goToPrivacyPolicy} />
+      <CookieBanner />
     </div>
   );
 }
