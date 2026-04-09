@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BarChart3, Library, MessageCircle, Zap } from 'lucide-react';
+import { BarChart3, Library, Menu, MessageCircle, X, Zap } from 'lucide-react';
 import { usePrompts } from './hooks/usePrompts';
 import { PromptGrid } from './components/PromptGrid';
 import { SyncButton } from './components/SyncButton';
@@ -12,6 +12,7 @@ import { PrivacyPolicy } from './pages/PrivacyPolicy';
 function App() {
   const { prompts, loading, error, refetch } = usePrompts();
   const [chatOpen, setChatOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [toastError, setToastError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState<'library' | 'dashboard' | 'privacy'>('dashboard');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -36,26 +37,29 @@ function App() {
     >
       {/* Header */}
       <header className="sticky top-0 z-40 border-b border-white/10 bg-[#0a0a0f]">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-4">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
+          {/* Logo */}
           <button
             type="button"
             onClick={goToDashboard}
             className="flex items-center gap-2.5 rounded-2xl px-2 py-1 text-right transition-all hover:bg-white/5"
           >
-            <div className="w-8 h-8 rounded-xl bg-violet-600 flex items-center justify-center">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-600">
               <Zap size={16} className="text-white" />
             </div>
             <div>
-              <h1 className="text-white font-bold text-base leading-none">PromptVibe Vault</h1>
-              <p className="text-slate-500 text-xs mt-0.5">ניהול פרומפטים</p>
+              <h1 className="text-base font-bold leading-none text-white">PromptVibe Vault</h1>
+              <p className="mt-0.5 text-xs text-slate-500">ניהול פרומפטים</p>
             </div>
           </button>
 
-          <div className="flex items-center gap-2">
-            <nav className="glass rounded-2xl p-1 flex items-center gap-1">
+          {/* Desktop nav */}
+          <div className="hidden items-center gap-2 md:flex">
+            <nav className="glass flex items-center gap-1 rounded-2xl p-1">
               <button
+                type="button"
                 onClick={goToLibrary}
-                className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all ${
+                className={`inline-flex min-h-[36px] items-center gap-2 rounded-xl px-4 text-sm font-medium transition-all ${
                   currentPage === 'library'
                     ? 'bg-violet-600 text-white shadow-lg shadow-violet-900/30'
                     : 'text-slate-300 hover:text-white'
@@ -65,8 +69,9 @@ function App() {
                 ספרייה 📚
               </button>
               <button
+                type="button"
                 onClick={goToDashboard}
-                className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all ${
+                className={`inline-flex min-h-[36px] items-center gap-2 rounded-xl px-4 text-sm font-medium transition-all ${
                   currentPage === 'dashboard'
                     ? 'bg-violet-600 text-white shadow-lg shadow-violet-900/30'
                     : 'text-slate-300 hover:text-white'
@@ -76,19 +81,64 @@ function App() {
                 דשבורד 📊
               </button>
             </nav>
-
             <SyncButton onSync={handleSyncDone} onError={handleError} />
             {currentPage === 'library' && (
               <button
+                type="button"
                 onClick={() => setChatOpen(true)}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl glass hover:border-violet-500/40 text-slate-300 hover:text-white text-sm font-medium transition-all"
+                className="glass inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:border-violet-500/40 hover:text-white"
               >
                 <MessageCircle size={15} />
                 צ'אט
               </button>
             )}
           </div>
+
+          {/* Mobile hamburger */}
+          <button
+            type="button"
+            onClick={() => setMenuOpen((prev) => !prev)}
+            className="glass flex min-h-[44px] min-w-[44px] items-center justify-center rounded-2xl text-white transition hover:border-violet-500/40 md:hidden"
+            aria-label={menuOpen ? 'סגור תפריט' : 'פתח תפריט'}
+          >
+            {menuOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
         </div>
+
+        {/* Mobile nav drawer */}
+        {menuOpen && (
+          <div className="border-t border-white/10 px-4 pb-4 pt-3 md:hidden">
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => { goToLibrary(); setMenuOpen(false); }}
+                className={`inline-flex min-h-[48px] items-center gap-3 rounded-2xl px-5 text-base font-medium transition-all ${
+                  currentPage === 'library'
+                    ? 'bg-violet-600 text-white'
+                    : 'glass text-slate-300 hover:text-white'
+                }`}
+              >
+                <Library size={18} />
+                ספרייה 📚
+              </button>
+              <button
+                type="button"
+                onClick={() => { goToDashboard(); setMenuOpen(false); }}
+                className={`inline-flex min-h-[48px] items-center gap-3 rounded-2xl px-5 text-base font-medium transition-all ${
+                  currentPage === 'dashboard'
+                    ? 'bg-violet-600 text-white'
+                    : 'glass text-slate-300 hover:text-white'
+                }`}
+              >
+                <BarChart3 size={18} />
+                דשבורד 📊
+              </button>
+              <div className="pt-1">
+                <SyncButton onSync={() => { handleSyncDone(); setMenuOpen(false); }} onError={handleError} />
+              </div>
+            </div>
+          </div>
+        )}
       </header>
 
       {/* Main */}
