@@ -1,6 +1,7 @@
 import { BarChart3, Layers3, Sparkles } from 'lucide-react';
 import type { Prompt } from '../types';
 import { PromptChatPanel } from './PromptChatPanel';
+import { GuidesPanel } from './GuidesPanel';
 
 interface DashboardProps {
   prompts: Prompt[];
@@ -160,6 +161,9 @@ export function Dashboard({
             compact
           />
         </div>
+      </section>
+      <section>
+        <GuidesPanel />
       </section>
     </div>
   );

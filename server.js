@@ -99,6 +99,28 @@ app.post('/api/translate', async (req, res) => {
   }
 });
 
+app.post('/api/guide', async (req, res) => {
+  const { topic } = req.body ?? {};
+  if (!topic || typeof topic !== 'string') {
+    return res.status(400).json({ error: 'topic is required' });
+  }
+  try {
+    const upstream = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'guide', topic }),
+    });
+    if (!upstream.ok) {
+      throw new Error(`Apps Script error: ${upstream.status}`);
+    }
+    const data = await upstream.json();
+    res.json(data);
+  } catch (error) {
+    console.error('Guide failed:', error);
+    res.status(502).json({ error: 'Guide failed' });
+  }
+});
+
 app.post('/api/chat', async (req, res) => {
   const { history } = req.body ?? {};
 
