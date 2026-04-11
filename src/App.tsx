@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BarChart3, Library, Menu, MessageCircle, X, Zap } from 'lucide-react';
+import { BarChart3, BookOpen, ChevronRight, Library, Menu, MessageCircle, X, Zap } from 'lucide-react';
 import { usePrompts } from './hooks/usePrompts';
 import { PromptGrid } from './components/PromptGrid';
 import { SyncButton } from './components/SyncButton';
@@ -8,14 +8,20 @@ import { ErrorToast } from './components/ErrorToast';
 import { Dashboard } from './components/Dashboard';
 import { CookieBanner } from './components/CookieBanner';
 import { PrivacyPolicy } from './pages/PrivacyPolicy';
+import { ArticlesPage } from './pages/ArticlesPage';
+import HistoryOfPrompts from './pages/HistoryOfPrompts';
+import AnatomyOfPerfectPrompt from './pages/AnatomyOfPerfectPrompt';
+
+type Page = 'library' | 'dashboard' | 'privacy' | 'articles' | 'article-detail';
 
 function App() {
   const { prompts, loading, error, refetch } = usePrompts();
   const [chatOpen, setChatOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [toastError, setToastError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState<'library' | 'dashboard' | 'privacy'>('dashboard');
+  const [currentPage, setCurrentPage] = useState<Page>('dashboard');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [articleId, setArticleId] = useState<string | null>(null);
 
   const handleError = (msg: string) => setToastError(msg);
   const handleSyncDone = () => refetch();
@@ -28,6 +34,25 @@ function App() {
     setChatOpen(false);
     setCurrentPage('privacy');
   };
+  const goToArticles = () => setCurrentPage('articles');
+  const goToArticle = (id: string) => {
+    setArticleId(id);
+    setCurrentPage('article-detail');
+  };
+
+  const isArticlePage = currentPage === 'articles' || currentPage === 'article-detail';
+
+  const navBtnClass = (active: boolean) =>
+    `inline-flex min-h-[36px] items-center gap-2 rounded-xl px-4 text-sm font-medium transition-all ${
+      active
+        ? 'bg-violet-600 text-white shadow-lg shadow-violet-900/30'
+        : 'text-slate-300 hover:text-white'
+    }`;
+
+  const mobileNavBtnClass = (active: boolean) =>
+    `inline-flex min-h-[48px] items-center gap-3 rounded-2xl px-5 text-base font-medium transition-all ${
+      active ? 'bg-violet-600 text-white' : 'glass text-slate-300 hover:text-white'
+    }`;
 
   return (
     <div
@@ -56,29 +81,17 @@ function App() {
           {/* Desktop nav */}
           <div className="hidden items-center gap-2 md:flex">
             <nav className="glass flex items-center gap-1 rounded-2xl p-1">
-              <button
-                type="button"
-                onClick={goToLibrary}
-                className={`inline-flex min-h-[36px] items-center gap-2 rounded-xl px-4 text-sm font-medium transition-all ${
-                  currentPage === 'library'
-                    ? 'bg-violet-600 text-white shadow-lg shadow-violet-900/30'
-                    : 'text-slate-300 hover:text-white'
-                }`}
-              >
+              <button type="button" onClick={goToLibrary} className={navBtnClass(currentPage === 'library')}>
                 <Library size={15} />
                 ספרייה 📚
               </button>
-              <button
-                type="button"
-                onClick={goToDashboard}
-                className={`inline-flex min-h-[36px] items-center gap-2 rounded-xl px-4 text-sm font-medium transition-all ${
-                  currentPage === 'dashboard'
-                    ? 'bg-violet-600 text-white shadow-lg shadow-violet-900/30'
-                    : 'text-slate-300 hover:text-white'
-                }`}
-              >
+              <button type="button" onClick={goToDashboard} className={navBtnClass(currentPage === 'dashboard')}>
                 <BarChart3 size={15} />
                 דשבורד 📊
+              </button>
+              <button type="button" onClick={goToArticles} className={navBtnClass(isArticlePage)}>
+                <BookOpen size={15} />
+                מאמרים ✍️
               </button>
             </nav>
             <SyncButton onSync={handleSyncDone} onError={handleError} />
@@ -112,11 +125,7 @@ function App() {
               <button
                 type="button"
                 onClick={() => { goToLibrary(); setMenuOpen(false); }}
-                className={`inline-flex min-h-[48px] items-center gap-3 rounded-2xl px-5 text-base font-medium transition-all ${
-                  currentPage === 'library'
-                    ? 'bg-violet-600 text-white'
-                    : 'glass text-slate-300 hover:text-white'
-                }`}
+                className={mobileNavBtnClass(currentPage === 'library')}
               >
                 <Library size={18} />
                 ספרייה 📚
@@ -124,14 +133,18 @@ function App() {
               <button
                 type="button"
                 onClick={() => { goToDashboard(); setMenuOpen(false); }}
-                className={`inline-flex min-h-[48px] items-center gap-3 rounded-2xl px-5 text-base font-medium transition-all ${
-                  currentPage === 'dashboard'
-                    ? 'bg-violet-600 text-white'
-                    : 'glass text-slate-300 hover:text-white'
-                }`}
+                className={mobileNavBtnClass(currentPage === 'dashboard')}
               >
                 <BarChart3 size={18} />
                 דשבורד 📊
+              </button>
+              <button
+                type="button"
+                onClick={() => { goToArticles(); setMenuOpen(false); }}
+                className={mobileNavBtnClass(isArticlePage)}
+              >
+                <BookOpen size={18} />
+                מאמרים ✍️
               </button>
               <div className="pt-1">
                 <SyncButton onSync={() => { handleSyncDone(); setMenuOpen(false); }} onError={handleError} />
@@ -142,9 +155,9 @@ function App() {
       </header>
 
       {/* Main */}
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
         {error && !loading && (
-          <div className="mb-6 glass border-red-500/30 rounded-xl px-4 py-3 text-red-300 text-sm">
+          <div className="mb-6 glass rounded-xl border-red-500/30 px-4 py-3 text-sm text-red-300">
             {error} —{' '}
             <button onClick={refetch} className="underline hover:no-underline">
               נסה שוב
@@ -155,11 +168,10 @@ function App() {
         {currentPage === 'library' ? (
           <>
             <div className="mb-6 flex items-center justify-between">
-              <p className="text-slate-400 text-sm">
+              <p className="text-sm text-slate-400">
                 {loading ? 'טוען...' : `${prompts.length} פרומפטים`}
               </p>
             </div>
-
             <PromptGrid
               prompts={prompts}
               loading={loading}
@@ -169,17 +181,38 @@ function App() {
           </>
         ) : currentPage === 'privacy' ? (
           <PrivacyPolicy />
+        ) : currentPage === 'articles' ? (
+          <ArticlesPage onSelectArticle={goToArticle} />
+        ) : currentPage === 'article-detail' ? (
+          <div>
+            {/* Back button */}
+            <button
+              type="button"
+              onClick={goToArticles}
+              className="glass mb-6 inline-flex min-h-[44px] items-center gap-2 rounded-2xl px-5 text-base font-medium text-slate-300 transition hover:border-violet-500/40 hover:text-white"
+            >
+              <ChevronRight size={18} />
+              חזרה למאמרים
+            </button>
+            {articleId === 'history-of-prompts' ? (
+              <HistoryOfPrompts />
+            ) : articleId === 'anatomy-of-perfect-prompt' ? (
+              <AnatomyOfPerfectPrompt />
+            ) : null}
+          </div>
         ) : (
           <Dashboard
             prompts={prompts}
             loading={loading}
             setSelectedCategory={setSelectedCategory}
-            setCurrentPage={setCurrentPage}
+            setCurrentPage={goToLibrary}
+            onGoToArticle={goToArticle}
+            onGoToArticles={goToArticles}
           />
         )}
       </main>
 
-      <footer className="max-w-6xl mx-auto px-4 sm:px-6 pb-24 sm:pb-28">
+      <footer className="mx-auto max-w-6xl px-4 pb-24 sm:px-6 sm:pb-28">
         <div className="glass rounded-2xl px-4 py-3 text-center text-sm text-slate-400">
           <button
             type="button"
@@ -191,10 +224,8 @@ function App() {
         </div>
       </footer>
 
-      {/* Chat Modal */}
       {chatOpen && <ChatModal onClose={() => setChatOpen(false)} />}
 
-      {/* Error Toast */}
       {toastError && (
         <ErrorToast message={toastError} onClose={() => setToastError(null)} />
       )}

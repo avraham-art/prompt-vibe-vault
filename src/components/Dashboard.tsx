@@ -1,22 +1,44 @@
 import { useState } from 'react';
-import { Sparkles, ChevronDown, BookOpen, Mail } from 'lucide-react';
+import { Sparkles, ChevronDown, BookOpen, Mail, Copy, Check, Clock } from 'lucide-react';
 import type { Prompt } from '../types';
 import { PromptChatPanel } from './PromptChatPanel';
-import { fetchGuide } from '../lib/api';
+import { ARTICLES } from '../data/articles';
 
-const GUIDE_TOPICS = [
-  'מבנה פרומפט בסיסי',
-  'כתיבת Role מושלם',
-  'הגדרת Context',
-  'דוגמאות בפרומפט',
-  'טיפים מתקדמים',
+const GUIDES = [
+  {
+    title: 'מבנה פרומפט בסיסי',
+    content:
+      'כל פרומפט טוב מורכב מ-3 חלקים: תפקיד (Persona), משימה (Task), והקשר (Context). הגדר תחילה מי ה-AI, מה אתה רוצה ממנו, ולמה. לדוגמה: "פעל כמומחה שיווק. כתוב 3 כותרות לפוסט ברשתות חברתיות על מוצר X. הקהל הוא בעלי עסקים קטנים."',
+  },
+  {
+    title: 'כתיבת Role מושלם',
+    content:
+      'ה-Role (תפקיד) הוא ה"מסגרת החשיבה" של ה-AI. ככל שתהיה ספציפי יותר, כך התוצאה תהיה מדויקת יותר. במקום "מומחה שיווק" — כתוב "מומחה שיווק דיגיטלי עם 10 שנות ניסיון בשיווק B2B לחברות SaaS". הספציפיות היא המפתח.',
+  },
+  {
+    title: 'הגדרת Context',
+    content:
+      'ההקשר (Context) הוא המידע הרקע שה-AI צריך כדי לתת תשובה מדויקת. כלול: מי קהל היעד, מה המטרה הסופית, ואילו מגבלות קיימות. דוגמה טובה: "הקהל הם בעלי עסקים קטנים בישראל, גיל 35-55, שאינם בקיאים בטכנולוגיה."',
+  },
+  {
+    title: 'דוגמאות בפרומפט',
+    content:
+      'שימוש בדוגמאות (Few-Shot) הוא אחד הכלים החזקים ביותר. תן ל-AI דוגמה אחת או שתיים לפלט הרצוי. לדוגמה: "כתוב פוסט בסגנון הזה: [הדבק פוסט לדוגמה]". הדוגמה מכייל את ה-AI לטון, לאורך ולמבנה שאתה מחפש.',
+  },
+  {
+    title: 'טיפים מתקדמים',
+    content:
+      '3 טיפים שישדרגו כל פרומפט: 1) הגדר פורמט פלט מפורש (טבלה, רשימה, JSON). 2) הוסף אילוצים ברורים ("מקסימום 100 מילים", "אל תשתמש במילה X"). 3) בקש מה-AI להסביר את החשיבה שלו לפני התשובה הסופית — זה משפר משמעותית את דיוק התוצאה.',
+  },
 ];
 
 interface DashboardProps {
   prompts: Prompt[];
   loading: boolean;
   setSelectedCategory: (category: string | null) => void;
-  setCurrentPage: (page: 'library' | 'dashboard') => void;
+  setCurrentPage: (page: 'library') => void;
+  onGoToArticle: (id: string) => void;
+  onGoToArticles: () => void;
 }
 
 interface CategoryStat {
@@ -24,10 +46,17 @@ interface CategoryStat {
   count: number;
 }
 
-export function Dashboard({ prompts, loading, setSelectedCategory, setCurrentPage }: DashboardProps) {
+function getTagSize(count: number, maxCount: number): string {
+  const ratio = maxCount > 0 ? count / maxCount : 0;
+  if (ratio >= 0.75) return 'text-xl';
+  if (ratio >= 0.5) return 'text-lg';
+  if (ratio >= 0.25) return 'text-base';
+  return 'text-sm';
+}
+
+export function Dashboard({ prompts, loading, setSelectedCategory, setCurrentPage, onGoToArticle, onGoToArticles }: DashboardProps) {
   const [openTopic, setOpenTopic] = useState<string | null>(null);
-  const [guideContent, setGuideContent] = useState<Record<string, string>>({});
-  const [guideLoading, setGuideLoading] = useState<Record<string, boolean>>({});
+  const [copiedGuide, setCopiedGuide] = useState<string | null>(null);
 
   const totalPrompts = prompts.length;
 
@@ -41,31 +70,24 @@ export function Dashboard({ prompts, loading, setSelectedCategory, setCurrentPag
     .map(([name, count]) => ({ name, count }))
     .sort((a, b) => b.count - a.count);
 
+  const maxCount = categoryStats[0]?.count ?? 1;
+
   const handleCategoryClick = (category: string) => {
     setSelectedCategory(category);
     setCurrentPage('library');
   };
 
-  const handleTopicToggle = async (topic: string) => {
-    if (openTopic === topic) {
-      setOpenTopic(null);
-      return;
-    }
-    setOpenTopic(topic);
-    if (!guideContent[topic] && !guideLoading[topic]) {
-      setGuideLoading((prev) => ({ ...prev, [topic]: true }));
-      try {
-        const result = await fetchGuide(topic);
-        setGuideContent((prev) => ({ ...prev, [topic]: result }));
-      } catch {
-        setGuideContent((prev) => ({ ...prev, [topic]: 'לא הצלחנו לטעון את המדריך. נסה שוב.' }));
-      } finally {
-        setGuideLoading((prev) => ({ ...prev, [topic]: false }));
-      }
-    }
+  const handleTopicToggle = (title: string) => {
+    setOpenTopic((prev) => (prev === title ? null : title));
   };
 
-  /* ── Shared sections (state lives in parent, no duplicate fetches) ── */
+  const handleCopy = async (title: string, content: string) => {
+    await navigator.clipboard.writeText(content);
+    setCopiedGuide(title);
+    setTimeout(() => setCopiedGuide(null), 2000);
+  };
+
+  /* ── Shared sections ── */
 
   const heroSection = (
     <div className="glass-dark relative overflow-hidden rounded-3xl border border-white/10 p-7">
@@ -86,25 +108,22 @@ export function Dashboard({ prompts, loading, setSelectedCategory, setCurrentPag
     </div>
   );
 
-  const categoryChips = (
+  const categoryCloud = (
     <div>
       <p className="mb-3 text-base font-medium text-slate-400">סנן לפי קטגוריה</p>
-      <div
-        className="flex gap-2.5 overflow-x-auto pb-1"
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-      >
+      <div className="flex flex-wrap gap-2.5">
         {loading
-          ? Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="skeleton h-11 w-28 flex-shrink-0 rounded-2xl" />
+          ? Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="skeleton h-10 w-24 rounded-2xl" />
             ))
           : categoryStats.map((stat) => (
               <button
                 key={stat.name}
                 type="button"
                 onClick={() => handleCategoryClick(stat.name)}
-                className="inline-flex min-h-[44px] flex-shrink-0 items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-5 text-base text-white transition hover:border-violet-500/40 hover:bg-violet-500/10"
+                className={`inline-flex min-h-[44px] items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-2 font-medium text-white transition hover:border-violet-500/40 hover:bg-violet-500/10 ${getTagSize(stat.count, maxCount)}`}
               >
-                <span>{stat.name}</span>
+                {stat.name}
                 <span className="rounded-full bg-violet-500/20 px-2 py-0.5 text-sm text-violet-300">
                   {stat.count}
                 </span>
@@ -122,42 +141,50 @@ export function Dashboard({ prompts, loading, setSelectedCategory, setCurrentPag
         </div>
         <div>
           <h3 className="text-base font-semibold text-white">מדריכי כתיבת פרומפטים</h3>
-          <p className="mt-0.5 text-sm text-slate-400">לחץ על נושא לקבלת מדריך מ-Gemini AI</p>
+          <p className="mt-0.5 text-sm text-slate-400">לחץ על נושא לקריאה</p>
         </div>
       </div>
       <div className="flex flex-col divide-y divide-white/5">
-        {GUIDE_TOPICS.map((topic) => (
-          <div key={topic}>
+        {GUIDES.map((guide) => (
+          <div key={guide.title}>
             <button
               type="button"
-              onClick={() => handleTopicToggle(topic)}
+              onClick={() => handleTopicToggle(guide.title)}
               className="flex min-h-[52px] w-full items-center justify-between gap-3 py-3 text-right transition hover:text-violet-300"
             >
-              <span className="text-base font-medium text-white">{topic}</span>
+              <span className="text-base font-medium text-white">{guide.title}</span>
               <ChevronDown
                 size={18}
                 className={`flex-shrink-0 text-slate-400 transition-transform duration-200 ${
-                  openTopic === topic ? 'rotate-180' : ''
+                  openTopic === guide.title ? 'rotate-180' : ''
                 }`}
               />
             </button>
             <div
               className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                openTopic === topic ? 'max-h-[600px] pb-5' : 'max-h-0'
+                openTopic === guide.title ? 'max-h-[400px] pb-5' : 'max-h-0'
               }`}
             >
-              {guideLoading[topic] ? (
-                <div className="flex flex-col items-center justify-center gap-3 py-8">
-                  <span className="text-base text-violet-400/80">Gemini מכין מדריך... ✨</span>
-                  <div className="h-1 w-32 overflow-hidden rounded-full bg-violet-500/20">
-                    <div className="h-full w-1/2 animate-pulse rounded-full bg-violet-400/50" />
-                  </div>
-                </div>
-              ) : (
-                <p className="whitespace-pre-wrap text-base leading-relaxed text-slate-300">
-                  {guideContent[topic]}
-                </p>
-              )}
+              <p className="mb-4 whitespace-pre-wrap text-base leading-relaxed text-slate-300">
+                {guide.content}
+              </p>
+              <button
+                type="button"
+                onClick={() => handleCopy(guide.title, guide.content)}
+                className="inline-flex min-h-[36px] items-center gap-2 rounded-xl bg-violet-500/15 px-4 text-sm font-medium text-violet-300 transition hover:bg-violet-500/25"
+              >
+                {copiedGuide === guide.title ? (
+                  <>
+                    <Check size={14} />
+                    הועתק!
+                  </>
+                ) : (
+                  <>
+                    <Copy size={14} />
+                    העתק
+                  </>
+                )}
+              </button>
             </div>
           </div>
         ))}
@@ -193,6 +220,97 @@ export function Dashboard({ prompts, loading, setSelectedCategory, setCurrentPag
     </div>
   );
 
+  const articlesGallery = (
+    <div>
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-500/20 text-violet-300">
+            <BookOpen size={17} />
+          </div>
+          <h3 className="text-base font-semibold text-white">מאמרים אחרונים</h3>
+        </div>
+        <button
+          type="button"
+          onClick={onGoToArticles}
+          className="text-sm font-medium text-violet-400 transition hover:text-violet-300"
+        >
+          כל המאמרים ←
+        </button>
+      </div>
+
+      {/* Mixed grid: big card + small card */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-[3fr_2fr]">
+        {/* Featured big card */}
+        {ARTICLES[0] && (
+          <button
+            type="button"
+            onClick={() => onGoToArticle(ARTICLES[0].id)}
+            className="glass group relative overflow-hidden rounded-3xl text-right transition hover:border-violet-500/40"
+          >
+            <div className="relative h-48 w-full overflow-hidden sm:h-64">
+              <img
+                src={ARTICLES[0].image}
+                alt={ARTICLES[0].title}
+                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+              <div className="absolute bottom-0 w-full p-4">
+                <span className="mb-2 inline-block rounded-full bg-violet-600/90 px-2.5 py-0.5 text-xs font-medium text-white">
+                  {ARTICLES[0].category}
+                </span>
+                <h4 className="text-base font-semibold leading-snug text-white">
+                  {ARTICLES[0].title}
+                </h4>
+                <div className="mt-1.5 flex items-center gap-1.5 text-xs text-slate-300">
+                  <Clock size={11} />
+                  {ARTICLES[0].readTime} קריאה
+                </div>
+              </div>
+            </div>
+          </button>
+        )}
+
+        {/* Small card */}
+        {ARTICLES[1] && (
+          <button
+            type="button"
+            onClick={() => onGoToArticle(ARTICLES[1].id)}
+            className="glass group flex flex-col overflow-hidden rounded-3xl text-right transition hover:border-violet-500/40"
+          >
+            <div className="relative h-36 w-full overflow-hidden">
+              <img
+                src={ARTICLES[1].image}
+                alt={ARTICLES[1].title}
+                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+            </div>
+            <div className="flex flex-1 flex-col gap-2 p-4">
+              <span className="inline-block w-fit rounded-full bg-violet-600/70 px-2.5 py-0.5 text-xs font-medium text-white">
+                {ARTICLES[1].category}
+              </span>
+              <h4 className="text-sm font-semibold leading-snug text-white group-hover:text-violet-200 transition-colors">
+                {ARTICLES[1].title}
+              </h4>
+              <p className="text-xs leading-relaxed text-slate-400 line-clamp-2">
+                {ARTICLES[1].description}
+              </p>
+              <div className="mt-auto flex items-center justify-between gap-2 pt-1">
+                <div className="inline-flex items-center gap-1 text-xs text-slate-500">
+                  <Clock size={11} />
+                  {ARTICLES[1].readTime}
+                </div>
+                <span className="text-xs font-medium text-violet-400 group-hover:text-violet-300 transition-colors">
+                  קרא עוד ←
+                </span>
+              </div>
+            </div>
+          </button>
+        )}
+      </div>
+    </div>
+  );
+
   const chatPanel = (
     <PromptChatPanel
       title="יוצר פרומפט חדש"
@@ -208,9 +326,10 @@ export function Dashboard({ prompts, loading, setSelectedCategory, setCurrentPag
       {/* ── Mobile (< md) ── */}
       <div className="flex flex-col gap-5 md:hidden">
         {heroSection}
-        {categoryChips}
+        {categoryCloud}
         {chatPanel}
         {guidesAccordion}
+        {articlesGallery}
         {newsletterCard}
       </div>
 
@@ -219,8 +338,9 @@ export function Dashboard({ prompts, loading, setSelectedCategory, setCurrentPag
         {/* Right column (60%) */}
         <div className="flex flex-col gap-5">
           {heroSection}
-          {categoryChips}
+          {categoryCloud}
           {guidesAccordion}
+          {articlesGallery}
           {newsletterCard}
         </div>
         {/* Left column (40%) */}
