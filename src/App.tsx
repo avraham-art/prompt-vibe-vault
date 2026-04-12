@@ -11,6 +11,14 @@ import { PrivacyPolicy } from './pages/PrivacyPolicy';
 import { ArticlesPage } from './pages/ArticlesPage';
 import HistoryOfPrompts from './pages/HistoryOfPrompts';
 import AnatomyOfPerfectPrompt from './pages/AnatomyOfPerfectPrompt';
+import CoreTechniques from './pages/CoreTechniques';
+import VisualPrompts from './pages/VisualPrompts';
+import PromptChaining from './pages/PromptChaining';
+import MachinePsychology from './pages/MachinePsychology';
+import PromptToolkit from './pages/PromptToolkit';
+import BusinessPrompts from './pages/BusinessPrompts';
+import FuturePrompts from './pages/FuturePrompts';
+import RoleplayPersona from './pages/RoleplayPersona';
 
 type Page = 'library' | 'dashboard' | 'privacy' | 'articles' | 'article-detail';
 
@@ -194,11 +202,18 @@ function App() {
               <ChevronRight size={18} />
               חזרה למאמרים
             </button>
-            {articleId === 'history-of-prompts' ? (
-              <HistoryOfPrompts />
-            ) : articleId === 'anatomy-of-perfect-prompt' ? (
-              <AnatomyOfPerfectPrompt />
-            ) : null}
+            {articleId === 'history-of-prompts' ? <HistoryOfPrompts />
+              : articleId === 'anatomy-of-perfect-prompt' ? <AnatomyOfPerfectPrompt />
+              : articleId === 'core-techniques' ? <CoreTechniques />
+              : articleId === 'visual-prompts' ? <VisualPrompts />
+              : articleId === 'prompt-chaining' ? <PromptChaining />
+              : articleId === 'machine-psychology' ? <MachinePsychology />
+              : articleId === 'prompt-toolkit' ? <PromptToolkit />
+              : articleId === 'business-prompts' ? <BusinessPrompts />
+              : articleId === 'future-prompts' ? <FuturePrompts />
+              : articleId === 'roleplay-persona' ? <RoleplayPersona />
+              : null
+            }
           </div>
         ) : (
           <Dashboard

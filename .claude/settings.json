@@ -21,6 +21,9 @@
       "Write",
       "Bash(npm *)",
       "Bash(git *)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\avraham\\Downloads\\website\\prompt-vibe-vault\\src"
     ]
   },
   "model": "claude-sonnet-4-6",
