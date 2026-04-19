@@ -55,6 +55,18 @@ export async function translatePrompt(content: string): Promise<string> {
   return typeof data === 'string' ? data : (data?.translation ?? data?.content ?? JSON.stringify(data));
 }
 
+export async function subscribeToNewsletter(email: string): Promise<void> {
+  const response = await fetch('/api/newsletter', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => null);
+    throw new Error(data?.error ?? `שגיאת שרת: ${response.status}`);
+  }
+}
 
 export async function fetchPromptContent(link: string): Promise<string> {
   const url = `${BASE_URL}?action=getContent&link=${encodeURIComponent(link)}`;

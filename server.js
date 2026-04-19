@@ -8,6 +8,7 @@ const PORT = process.env.PORT || 3000;
 const APPS_SCRIPT_URL =
   'https://script.google.com/macros/s/AKfycbyfv3c2zFNyLgs3Z9kjgv2WJUVIm5w6EHjnhX1asAqHlKnYY7jXh-1NYhd6ZV4xmrZ1/exec';
 const PROMPTS_CACHE_TTL_MS = 5 * 60 * 1000;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 let promptsCache = {
   data: null,
@@ -99,6 +100,31 @@ app.post('/api/translate', async (req, res) => {
   }
 });
 
+app.post('/api/newsletter', async (req, res) => {
+  const { email } = req.body ?? {};
+  const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
+
+  if (!EMAIL_PATTERN.test(normalizedEmail)) {
+    return res.status(400).json({ error: 'Valid email is required' });
+  }
+
+  try {
+    const upstream = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'subscribe', email: normalizedEmail }),
+    });
+
+    if (!upstream.ok) {
+      throw new Error(`Apps Script error: ${upstream.status}`);
+    }
+
+    res.json({ status: 'success' });
+  } catch (error) {
+    console.error('Newsletter signup failed:', error);
+    res.status(502).json({ error: 'Newsletter signup failed' });
+  }
+});
 
 app.post('/api/chat', async (req, res) => {
   const { history } = req.body ?? {};

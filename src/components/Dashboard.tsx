@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { Sparkles, ChevronDown, BookOpen, Mail, Copy, Check, Clock } from 'lucide-react';
+import type { FormEvent } from 'react';
+import { Sparkles, ChevronDown, BookOpen, Copy, Check, Clock } from 'lucide-react';
 import type { Prompt } from '../types';
 import { PromptChatPanel } from './PromptChatPanel';
 import { ARTICLES } from '../data/articles';
+import { subscribeToNewsletter } from '../lib/api';
 
 const GUIDES = [
   {
@@ -32,6 +34,10 @@ const GUIDES = [
   },
 ];
 
+type NewsletterStatus = 'idle' | 'loading' | 'success' | 'error';
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 interface DashboardProps {
   prompts: Prompt[];
   loading: boolean;
@@ -57,8 +63,13 @@ function getTagSize(count: number, maxCount: number): string {
 export function Dashboard({ prompts, loading, setSelectedCategory, setCurrentPage, onGoToArticle, onGoToArticles }: DashboardProps) {
   const [openTopic, setOpenTopic] = useState<string | null>(null);
   const [copiedGuide, setCopiedGuide] = useState<string | null>(null);
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [newsletterStatus, setNewsletterStatus] = useState<NewsletterStatus>('idle');
+  const [newsletterMessage, setNewsletterMessage] = useState('');
 
   const totalPrompts = prompts.length;
+  const trimmedNewsletterEmail = newsletterEmail.trim();
+  const isNewsletterEmailValid = EMAIL_PATTERN.test(trimmedNewsletterEmail);
 
   const categoryStats: CategoryStat[] = Object.entries(
     prompts.reduce<Record<string, number>>((acc, prompt) => {
@@ -85,6 +96,30 @@ export function Dashboard({ prompts, loading, setSelectedCategory, setCurrentPag
     await navigator.clipboard.writeText(content);
     setCopiedGuide(title);
     setTimeout(() => setCopiedGuide(null), 2000);
+  };
+
+  const handleNewsletterSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!isNewsletterEmailValid) {
+      setNewsletterStatus('error');
+      setNewsletterMessage('נא להזין כתובת אימייל תקינה');
+      return;
+    }
+
+    setNewsletterStatus('loading');
+    setNewsletterMessage('');
+
+    try {
+      await subscribeToNewsletter(trimmedNewsletterEmail);
+      setNewsletterStatus('success');
+      setNewsletterMessage('נרשמת בהצלחה! 🎉');
+      setNewsletterEmail('');
+    } catch (error) {
+      console.error('Dashboard newsletter signup failed:', error);
+      setNewsletterStatus('error');
+      setNewsletterMessage('משהו השתבש. נסו שוב בעוד רגע');
+    }
   };
 
   /* ── Shared sections ── */
@@ -196,27 +231,58 @@ export function Dashboard({ prompts, loading, setSelectedCategory, setCurrentPag
     <div className="glass rounded-3xl p-5 sm:p-6">
       <div className="mb-5 flex items-start gap-3">
         <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-violet-500/20 text-violet-300">
-          <Mail size={18} />
+          <span className="text-lg" aria-hidden="true">📧</span>
         </div>
         <div>
-          <h3 className="text-base font-semibold text-white">טיפים ישירות למייל</h3>
-          <p className="mt-1 text-base text-slate-400">עדכונים, שיטות ודוגמאות שאוצרו במיוחד</p>
+          <h3 className="text-base font-semibold text-white">עדכונים שבועיים על עולם הפרומפטים</h3>
+          <p className="mt-1 text-base text-slate-400">קבלו טיפים, מגמות וטכניקות חדשות ישירות למייל</p>
         </div>
       </div>
-      <div className="flex gap-2.5">
-        <input
-          type="email"
-          placeholder="your@email.com"
-          dir="ltr"
-          className="min-h-[48px] flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 text-base text-white placeholder:text-slate-500 focus:border-violet-500/50 focus:outline-none"
-        />
-        <button
-          type="button"
-          className="min-h-[48px] flex-shrink-0 rounded-2xl bg-violet-600 px-6 text-base font-semibold text-white transition hover:bg-violet-500"
-        >
-          הצטרף
-        </button>
-      </div>
+
+      <form onSubmit={handleNewsletterSubmit} noValidate>
+        <div className="flex flex-col gap-2.5 sm:flex-row-reverse">
+          <label className="sr-only" htmlFor="dashboard-newsletter-email">
+            אימייל
+          </label>
+          <input
+            id="dashboard-newsletter-email"
+            type="email"
+            inputMode="email"
+            autoComplete="email"
+            value={newsletterEmail}
+            onChange={(event) => {
+              setNewsletterEmail(event.target.value);
+              if (newsletterStatus !== 'loading') {
+                setNewsletterStatus('idle');
+                setNewsletterMessage('');
+              }
+            }}
+            disabled={newsletterStatus === 'loading'}
+            placeholder="your@email.com"
+            dir="ltr"
+            aria-invalid={newsletterStatus === 'error' && !isNewsletterEmailValid}
+            aria-describedby={newsletterMessage ? 'dashboard-newsletter-message' : undefined}
+            className="min-h-[48px] flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 text-base text-white placeholder:text-slate-500 transition focus:border-violet-500/50 focus:outline-none disabled:cursor-not-allowed disabled:opacity-70"
+          />
+          <button
+            type="submit"
+            disabled={newsletterStatus === 'loading'}
+            className="min-h-[48px] flex-shrink-0 rounded-2xl bg-violet-600 px-6 text-base font-semibold text-white transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {newsletterStatus === 'loading' ? 'שולח...' : 'הצטרף'}
+          </button>
+        </div>
+
+        {newsletterMessage && (
+          <p
+            id="dashboard-newsletter-message"
+            className={`mt-3 text-sm ${newsletterStatus === 'success' ? 'text-emerald-300' : 'text-rose-300'}`}
+            role={newsletterStatus === 'error' ? 'alert' : 'status'}
+          >
+            {newsletterMessage}
+          </p>
+        )}
+      </form>
     </div>
   );
 

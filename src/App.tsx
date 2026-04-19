@@ -7,6 +7,7 @@ import { ChatModal } from './components/ChatModal';
 import { ErrorToast } from './components/ErrorToast';
 import { Dashboard } from './components/Dashboard';
 import { CookieBanner } from './components/CookieBanner';
+import { NewsletterFooter } from './components/NewsletterFooter';
 import { PrivacyPolicy } from './pages/PrivacyPolicy';
 import { ArticlesPage } from './pages/ArticlesPage';
 import HistoryOfPrompts from './pages/HistoryOfPrompts';
@@ -226,6 +227,8 @@ function App() {
           />
         )}
       </main>
+
+      <NewsletterFooter />
 
       <footer className="mx-auto max-w-6xl px-4 pb-24 sm:px-6 sm:pb-28">
         <div className="glass rounded-2xl px-4 py-3 text-center text-sm text-slate-400">
