@@ -239,7 +239,7 @@ function App() {
         )}
       </main>
 
-      <NewsletterFooter />
+      {currentPage !== 'dashboard' && <NewsletterFooter />}
 
       <footer className="mx-auto max-w-6xl px-4 pb-24 sm:px-6 sm:pb-28">
         <div className="glass flex flex-wrap items-center justify-center gap-x-5 gap-y-2 rounded-2xl px-4 py-3 text-center text-sm text-slate-400">
