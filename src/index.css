@@ -11,6 +11,11 @@
   box-sizing: border-box;
 }
 
+*:focus-visible {
+  outline: 3px solid #a78bfa;
+  outline-offset: 3px;
+}
+
 html, body {
   font-family: 'Heebo', sans-serif;
   background-color: #0f0f1a;
@@ -47,4 +52,48 @@ html, body {
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
+}
+
+html.a11y-text-large {
+  font-size: 112.5%;
+}
+
+html.a11y-text-larger {
+  font-size: 125%;
+}
+
+html.a11y-high-contrast body {
+  background-color: #000;
+  color: #fff;
+}
+
+html.a11y-high-contrast .glass,
+html.a11y-high-contrast .glass-dark {
+  background: rgba(0, 0, 0, 0.9);
+  border-color: rgba(255, 255, 255, 0.75);
+  box-shadow: none;
+}
+
+html.a11y-high-contrast button,
+html.a11y-high-contrast input,
+html.a11y-high-contrast textarea,
+html.a11y-high-contrast select {
+  border-color: rgba(255, 255, 255, 0.75);
+}
+
+html.a11y-high-contrast p,
+html.a11y-high-contrast span,
+html.a11y-high-contrast li {
+  color: inherit;
+}
+
+html.a11y-highlight-links a,
+html.a11y-highlight-links button {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+html.a11y-highlight-links button {
+  outline: 2px solid rgba(167, 139, 250, 0.7);
+  outline-offset: 2px;
 }

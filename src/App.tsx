@@ -8,7 +8,9 @@ import { ErrorToast } from './components/ErrorToast';
 import { Dashboard } from './components/Dashboard';
 import { CookieBanner } from './components/CookieBanner';
 import { NewsletterFooter } from './components/NewsletterFooter';
+import { AccessibilityWidget } from './components/AccessibilityWidget';
 import { PrivacyPolicy } from './pages/PrivacyPolicy';
+import { TermsOfUse } from './pages/TermsOfUse';
 import { ArticlesPage } from './pages/ArticlesPage';
 import HistoryOfPrompts from './pages/HistoryOfPrompts';
 import AnatomyOfPerfectPrompt from './pages/AnatomyOfPerfectPrompt';
@@ -21,7 +23,7 @@ import BusinessPrompts from './pages/BusinessPrompts';
 import FuturePrompts from './pages/FuturePrompts';
 import RoleplayPersona from './pages/RoleplayPersona';
 
-type Page = 'library' | 'dashboard' | 'privacy' | 'articles' | 'article-detail';
+type Page = 'library' | 'dashboard' | 'privacy' | 'terms' | 'articles' | 'article-detail';
 
 function App() {
   const { prompts, loading, error, refetch } = usePrompts();
@@ -43,10 +45,17 @@ function App() {
     setChatOpen(false);
     setCurrentPage('privacy');
   };
+  const goToTerms = () => {
+    setChatOpen(false);
+    setCurrentPage('terms');
+  };
   const goToArticles = () => setCurrentPage('articles');
   const goToArticle = (id: string) => {
     setArticleId(id);
     setCurrentPage('article-detail');
+  };
+  const openCookiePreferences = () => {
+    window.dispatchEvent(new Event('promptvibe:open-cookie-settings'));
   };
 
   const isArticlePage = currentPage === 'articles' || currentPage === 'article-detail';
@@ -190,6 +199,8 @@ function App() {
           </>
         ) : currentPage === 'privacy' ? (
           <PrivacyPolicy />
+        ) : currentPage === 'terms' ? (
+          <TermsOfUse />
         ) : currentPage === 'articles' ? (
           <ArticlesPage onSelectArticle={goToArticle} />
         ) : currentPage === 'article-detail' ? (
@@ -231,13 +242,27 @@ function App() {
       <NewsletterFooter />
 
       <footer className="mx-auto max-w-6xl px-4 pb-24 sm:px-6 sm:pb-28">
-        <div className="glass rounded-2xl px-4 py-3 text-center text-sm text-slate-400">
+        <div className="glass flex flex-wrap items-center justify-center gap-x-5 gap-y-2 rounded-2xl px-4 py-3 text-center text-sm text-slate-400">
           <button
             type="button"
             onClick={goToPrivacyPolicy}
             className="font-medium text-slate-200 transition-colors hover:text-white"
           >
             מדיניות פרטיות
+          </button>
+          <button
+            type="button"
+            onClick={goToTerms}
+            className="font-medium text-slate-200 transition-colors hover:text-white"
+          >
+            תנאי שימוש
+          </button>
+          <button
+            type="button"
+            onClick={openCookiePreferences}
+            className="font-medium text-slate-200 transition-colors hover:text-white"
+          >
+            העדפות עוגיות
           </button>
         </div>
       </footer>
@@ -248,7 +273,8 @@ function App() {
         <ErrorToast message={toastError} onClose={() => setToastError(null)} />
       )}
 
-      <CookieBanner />
+      <AccessibilityWidget />
+      <CookieBanner onPrivacyClick={goToPrivacyPolicy} onTermsClick={goToTerms} />
     </div>
   );
 }
